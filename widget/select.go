@@ -70,6 +70,19 @@ func NewSelectWithData(options []string, data binding.String) *Select {
 	return sel
 }
 
+// NewSelectWithOptionsData returns a new select widget connected to the specified data source for select
+// and the specified data source for options.
+//
+// Since: 2.7
+func NewSelectWithOptionsData(options binding.StringList, data binding.String) *Select {
+	sel := NewSelect([]string{}, nil)
+	// Must call BindOptions first so that options are set before the selected value
+	// is applied in Bind.
+	sel.BindOptions(options)
+	sel.Bind(data)
+	return sel
+}
+
 // Bind connects the specified data source to this select.
 // The current value will be displayed and any changes in the data will cause the widget
 // to update.

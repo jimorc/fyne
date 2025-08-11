@@ -28,15 +28,14 @@ func TestNewSelect(t *testing.T) {
 
 func TestNewSelectWithData(t *testing.T) {
 	data := binding.NewString()
-	combo := widget.NewSelectWithData([]string{"1", "2", "3"}, data)
-
-	assert.Len(t, combo.Options, 3)
-	assert.Equal(t, "", combo.Selected)
-
 	err := data.Set("2")
 	assert.NoError(t, err)
 	waitForBinding()
+	combo := widget.NewSelectWithData([]string{"1", "2", "3"}, data)
+
+	assert.Len(t, combo.Options, 3)
 	assert.Equal(t, "2", combo.Selected)
+
 }
 
 func TestSelect_Align(t *testing.T) {
@@ -134,6 +133,27 @@ func TestSelect_OptionsBinding(t *testing.T) {
 	assert.Equal(t, []string{"1", "2", "3"}, options)
 	assert.Equal(t, []string{"4", "5", "6"}, s.Options)
 	assert.Equal(t, "2", s.Selected)
+}
+
+func TestNewSelectWithOptionsData(t *testing.T) {
+	opts := binding.NewStringList()
+	opts.Set([]string{"1", "2", "3"})
+	data := binding.NewString()
+	err := data.Set("2")
+	waitForBinding()
+	assert.NoError(t, err)
+	combo := widget.NewSelectWithOptionsData(opts, data)
+
+	assert.Len(t, combo.Options, 3)
+	assert.Equal(t, []string{"1", "2", "3"}, combo.Options)
+
+	assert.Equal(t, "2", combo.Selected)
+
+	err = opts.Set([]string{"4", "5", "6"})
+	assert.NoError(t, err)
+	waitForBinding()
+	assert.Len(t, combo.Options, 3)
+	assert.Equal(t, "2", combo.Selected)
 }
 
 func TestSelect_ChangeTheme(t *testing.T) {
