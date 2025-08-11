@@ -103,6 +103,39 @@ func TestSelect_Binding(t *testing.T) {
 	assert.Equal(t, "2", s.Selected)
 }
 
+func TestSelect_OptionsBinding(t *testing.T) {
+	s := widget.NewSelect([]string{"1", "2", "3"}, nil)
+	s.SetSelected("2")
+	assert.Equal(t, "2", s.Selected)
+	waitForBinding() // this time it is the de-echo before binding
+
+	str := binding.NewStringList()
+	s.BindOptions(str)
+	waitForBinding()
+	options, err := str.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, []string(nil), options)
+	assert.Equal(t, []string(nil), s.Options)
+	assert.Equal(t, "2", s.Selected) // no match to options, so keep previous value
+
+	err = str.Set([]string{"4", "5", "6"})
+	assert.NoError(t, err)
+	waitForBinding()
+	assert.Equal(t, []string{"4", "5", "6"}, s.Options)
+	assert.Equal(t, "2", s.Selected)
+
+	s.UnbindOptions()
+	assert.Nil(t, s.OnOptionsChanged)
+	err = str.Set([]string{"1", "2", "3"})
+	waitForBinding()
+	assert.NoError(t, err)
+	options, err = str.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"1", "2", "3"}, options)
+	assert.Equal(t, []string{"4", "5", "6"}, s.Options)
+	assert.Equal(t, "2", s.Selected)
+}
+
 func TestSelect_ChangeTheme(t *testing.T) {
 	test.NewTempApp(t)
 

@@ -25,8 +25,15 @@ type Select struct {
 	Options     []string
 	PlaceHolder string
 	OnChanged   func(string) `json:"-"`
+	// Since: 2.7
+	OnOptionsChanged func([]string) `json:"-"`
 
+	// binder is used to connect Selected to a data source.
 	binder basicBinder
+	// optsbinder is used to connect Options to a data source.
+
+	// Since: 2.7
+	optsbinder basicBinder
 
 	focused bool
 	hovered bool
@@ -74,6 +81,16 @@ func (s *Select) Bind(data binding.String) {
 
 	s.OnChanged = func(_ string) {
 		s.binder.CallWithData(s.writeData)
+	}
+}
+
+// BindOptions connects the specified data source to this select's Options.
+// Since: 2.7
+func (s *Select) BindOptions(data binding.StringList) {
+	s.optsbinder.SetCallback(s.updateFromOptionsData)
+	s.optsbinder.Bind(data)
+	s.OnOptionsChanged = func(_ []string) {
+		s.optsbinder.CallWithData(s.writeOptionsData)
 	}
 }
 
@@ -276,6 +293,15 @@ func (s *Select) Unbind() {
 	s.binder.Unbind()
 }
 
+// UnbindOptions disconnects any configured options data source from this Select's Options.
+//
+// Since: 2.7
+func (s *Select) UnbindOptions() {
+	// Since: 2.7
+	s.OnOptionsChanged = nil
+	s.optsbinder.Unbind()
+}
+
 func (s *Select) popUpPos() fyne.Position {
 	buttonPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(s.super())
 	return buttonPos.Add(fyne.NewPos(0, s.Size().Height-s.Theme().Size(theme.SizeNameInputBorder)))
@@ -332,6 +358,22 @@ func (s *Select) updateFromData(data binding.DataItem) {
 	s.SetSelected(val)
 }
 
+func (s *Select) updateFromOptionsData(data binding.DataItem) {
+	if data == nil {
+		return
+	}
+	stringListSource, ok := data.(binding.StringList)
+	if !ok {
+		return
+	}
+
+	val, err := stringListSource.Get()
+	if err != nil {
+		return
+	}
+	s.SetOptions(val)
+}
+
 func (s *Select) updateSelected(text string) {
 	s.Selected = text
 
@@ -359,6 +401,35 @@ func (s *Select) writeData(data binding.DataItem) {
 		if err != nil {
 			fyne.LogError(fmt.Sprintf("Failed to set binding value to %s", s.Selected), err)
 		}
+	}
+}
+
+func (s *Select) writeOptionsData(optsData binding.DataItem) {
+	if optsData == nil {
+		return
+	}
+
+	stringListTarget, ok := optsData.(binding.StringList)
+	if !ok {
+		return
+	}
+
+	currentOpts, err := stringListTarget.Get()
+	if err != nil {
+		return
+	}
+	// If the current options are the same as the new options, do nothing.
+	if len(currentOpts) == len(s.Options) {
+		for i, opt := range currentOpts {
+			if opt != s.Options[i] {
+				currentOpts = nil
+				break
+			}
+		}
+	}
+	err = stringListTarget.Set(s.Options)
+	if err != nil {
+		fyne.LogError(fmt.Sprintf("Failed to set binding options to %v", s.Options), err)
 	}
 }
 
