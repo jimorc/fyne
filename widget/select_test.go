@@ -135,14 +135,14 @@ func TestSelect_OptionsBinding(t *testing.T) {
 	assert.Equal(t, "2", s.Selected)
 }
 
-func TestNewSelectWithOptionsData(t *testing.T) {
+func TestNewSelectWithDataOptions(t *testing.T) {
 	opts := binding.NewStringList()
 	opts.Set([]string{"1", "2", "3"})
 	data := binding.NewString()
 	err := data.Set("2")
 	waitForBinding()
 	assert.NoError(t, err)
-	combo := widget.NewSelectWithOptionsData(opts, data)
+	combo := widget.NewSelectWithDataOptions(opts, data)
 
 	assert.Len(t, combo.Options, 3)
 	assert.Equal(t, []string{"1", "2", "3"}, combo.Options)
